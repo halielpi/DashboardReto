@@ -19,15 +19,15 @@ app.layout = html.Div([
     ),
     dcc.Graph(
         id='graph_2',
-        figure=plot_barras(),
+        figure=plot_formas(),
         style={'width': '50%'}
     ),
     dcc.Graph(
-        id='graph_2',
-        figure=plot_formas(),
+        id='graph_3',
+        figure=plot_barras(),
         style={'width': '50%'}
     ),
 ])
 
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    app.run_server(debug=True, port=8051)
