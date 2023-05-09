@@ -21,17 +21,42 @@ app.layout = html.Div([
         ]),
     dcc.Graph(
         id='graph_1',
-        figure=bar_emision(),
+        figure=sexo_por_entidad(),
         style={'width': '50%'}
     ),
     dcc.Graph(
         id='graph_2',
-        figure=plot_formas(),
+        figure=formas_ventas(),
         style={'width': '50%'}
     ),
     dcc.Graph(
         id='graph_3',
         figure=piramide_poblacional(),
+        style={'width': '50%'}
+    ),
+    dcc.Graph(
+        id='graph_4',
+        figure=plot_barras(),
+        style={'width': '50%'}
+    ),
+    dcc.Graph(
+        id='graph_5',
+        figure=modalidad_poliza(),
+        style={'width': '50%'}
+    ),
+    dcc.Graph(
+        id='graph_6',
+        figure=cobertura(),
+        style={'width': '50%'}
+    ),
+    dcc.Graph(
+        id='graph_7',
+        figure=siniestros(),
+        style={'width': '50%'}
+    ),
+    dcc.Graph(
+        id='graph_8',
+        figure=siniestros_por_monto_pagado(),
         style={'width': '50%'}
     ),
 ])
