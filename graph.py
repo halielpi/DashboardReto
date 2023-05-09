@@ -1,6 +1,8 @@
 import pandas as pd 
 import numpy as np 
 import plotly.express as px 
+import plotly.graph_objs as go
+
 
 sio_file_comisiones = '/Users/xariselpichardojaime/Desktop/My Python/DashboardReto/downloads/comisiones.csv'
 sio_file_emision = '/Users/xariselpichardojaime/Desktop/My Python/DashboardReto/downloads/emision.csv'
@@ -42,4 +44,58 @@ def plot_formas():
                       xaxis_tickangle=-90)
     return fig
     
+
+def piramide_poblacional():
+    # Agrupar la población por edad y sexo
+    df_poblacion = df_emision.groupby(['EDAD', 'SEXO']).size().reset_index(name='poblacion')
+
+    # Crear un nuevo DataFrame con los resultados de la agrupación
+    df_piramide = pd.concat([
+        df_poblacion[df_poblacion['SEXO'] == 'Masculino'].sort_values(by='EDAD'),
+        df_poblacion[df_poblacion['SEXO'] == 'Femenino'].sort_values(by='EDAD', ascending=False)
+    ], ignore_index=True)
+
+    # Crear la figura
+    fig = go.Figure()
+
+    # Agregar las barras de la población
+    fig.add_trace(
+        go.Bar(
+            x=-df_piramide[df_piramide['SEXO'] == 'Femenino']['poblacion'],
+            y=df_piramide[df_piramide['SEXO'] == 'Femenino']['EDAD'],
+            orientation='h',
+            name='Población Femenina',
+            marker_color='#FFC0CB'
+        )
+    )
+
+    fig.add_trace(
+        go.Bar(
+            x=df_piramide[df_piramide['SEXO'] == 'Masculino']['poblacion'],
+            y=df_piramide[df_piramide['SEXO'] == 'Masculino']['EDAD'],
+            orientation='h',
+            name='Población Masculina',
+            marker_color='#ADD8E6'
+        )
+    )
+
+    # Configurar el diseño del gráfico
+    fig.update_layout(
+        title='Pirámide poblacional por género y edad',
+        xaxis=dict(title='Población'),
+        yaxis=dict(title='Edad'),
+        barmode='overlay',
+        bargap=0.1,
+        legend=dict(
+            yanchor='top',
+            y=0.99,
+            xanchor='left',
+            x=0.01
+        )
+    )
+
+    # Mostrar el gráfico
+    return fig.show()
+
+
     

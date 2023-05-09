@@ -31,7 +31,7 @@ app.layout = html.Div([
     ),
     dcc.Graph(
         id='graph_3',
-        figure=plot_barras(),
+        figure=piramide_poblacional(),
         style={'width': '50%'}
     ),
 ])
