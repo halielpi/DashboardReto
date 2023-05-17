@@ -10,9 +10,9 @@ sio_file_siniestros = '/Users/xariselpichardojaime/Desktop/My Python/DashboardRe
 sio_file_ors_entidades = '/Users/xariselpichardojaime/Desktop/My Python/DashboardReto/downloads/Ors_entidad.csv'
 
 
-df_comisiones = pd.read_csv(sio_file_comisiones, encoding = 'cp1252', sep=',', on_bad_lines= 'warn'  )
-df_emision = pd.read_csv(sio_file_emision, encoding = 'cp1252', sep=',', on_bad_lines= 'warn' )
-df_siniestros= pd.read_csv(sio_file_siniestros, encoding = 'cp1252', sep=',', on_bad_lines= 'warn' )
+df_comisiones = pd.read_csv(sio_file_comisiones, encoding = 'utf-8', sep=',', on_bad_lines= 'warn'  )
+df_emision = pd.read_csv(sio_file_emision, encoding = 'utf-8', sep=',', on_bad_lines= 'warn' )
+df_siniestros= pd.read_csv(sio_file_siniestros, encoding = 'utf-8', sep=',', on_bad_lines= 'warn' )
 ors_entidades_df= pd.read_csv(sio_file_ors_entidades)
 
 df_emision = df_emision.dropna()
@@ -20,7 +20,7 @@ df_siniestros = df_siniestros.dropna()
 df_siniestros = df_siniestros.dropna()
 df_emision = df_emision[df_emision['ENTIDAD ']!='No disponible ']
 
-columns = ['NUMERO DE ASEGURADOS', 'PRIMA CEDIDA', 'COMISIONES DIRECTAS', 'FONDO DE INVERSIîN', 'FONDO DE ADMINISTRACION', 'MONTO DE DIVIDENDOS', 'MONTO DE RESCATE']
+columns = ['NUMERO DE ASEGURADOS', 'PRIMA CEDIDA', 'COMISIONES DIRECTAS', 'FONDO DE INVERSIÓN', 'FONDO DE ADMINISTRACION', 'MONTO DE DIVIDENDOS', 'MONTO DE RESCATE']
 for col in columns:
     df_comisiones[col] = pd.to_numeric(df_comisiones[col].replace('[^0-9\.-]','',regex=True), downcast='float')
 
@@ -43,6 +43,7 @@ def sexo_por_entidad():
 
 def plot_barras():
     barras = df_emision.groupby('ENTIDAD ')['SUMA ASEGURADA'].sum().reset_index()
+    barras['SUMA ASEGURADA'] = barras['SUMA ASEGURADA'] / 1000000
     fig = px.bar(barras, x='ENTIDAD ', y='SUMA ASEGURADA', color='ENTIDAD ', height=500, width=1000)
     fig.update_layout(title='Suma Asegurada por Estado en MDP', xaxis_title="Estados", yaxis_title="Suma asegurada en Millones")
     fig.update_yaxes(tickformat=".2f", title='Suma asegurada en Millones')
@@ -155,6 +156,6 @@ def siniestros_por_monto_pagado():
 
     pie2 = pd.DataFrame({'CAUSA DEL SINIESTRO': barras4['CAUSA DEL SINIESTRO'].head(15), 'Count': barras4['Count'].head(15)})
 
-    fig = px.pie(pie2, values='Count', names='CAUSA DEL SINIESTRO', title='Mayores 10 causas de Siniestro según el monto pagado',
+    fig = px.pie(pie2, values='Count', names='CAUSA DEL SINIESTRO', title='Mayores 15 causas de Siniestro según el monto pagado',
                 labels={'CAUSA DEL SINIESTRO':'Causa del siniestro', 'Count':'Porcentaje'}, height=500, width=1000)
     return fig
