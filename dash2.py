@@ -42,12 +42,13 @@ app.layout =dbc.Container([
                                 id='graph_4',
                                 figure=plot_barras(),
                                 style={'width': '50%'}
-                            ),
+                            ), 
                         ]  
                     ),
                     className='mt-3'                
                 ),
-                label='Tab1'),
+                label='Tab1', active_tab_style={"textTransform": "uppercase"},
+                activeTabClassName="fw-bold"),
             dbc.Tab(
                 dbc.Card(
                     dbc.CardBody(
@@ -73,7 +74,8 @@ app.layout =dbc.Container([
                     ),
                     className='mt-3'                
                 ),
-                label='Tab2'),
+                label='Tab2', active_tab_style={"textTransform": "uppercase"},
+                activeTabClassName="fw-bold"),
             dbc.Tab(
                 dbc.Card(
                     dbc.CardBody(
@@ -94,9 +96,10 @@ app.layout =dbc.Container([
                     ),
                     className='mt-3'                
                 ),
-                label='Tab3'),        
+                label='Tab3', active_tab_style={"textTransform": "uppercase"},
+                activeTabClassName="fw-bold"),        
         ])
 ])
 
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    app.run_server(debug=True, port=8052)

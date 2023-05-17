@@ -80,7 +80,7 @@ def piramide_poblacional():
             y=df_piramide[df_piramide['SEXO'] == 'Femenino']['EDAD'],
             orientation='h',
             name='Población Femenina',
-            marker_color='#FFC0CB'
+            marker_color='#bd609b'
         )
     )
 
@@ -90,7 +90,7 @@ def piramide_poblacional():
             y=df_piramide[df_piramide['SEXO'] == 'Masculino']['EDAD'],
             orientation='h',
             name='Población Masculina',
-            marker_color='#ADD8E6'
+            marker_color='#65b0c9'
         )
     )
 
