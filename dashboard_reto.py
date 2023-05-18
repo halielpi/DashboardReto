@@ -19,7 +19,7 @@ app.layout = html.Div([
         html.Li('Jorge Jair Licea Ávalos (A01654956)'),
         html.Li('Maximiliano Barajas Chávez (A01654403)'),
         ]),
-    dcc.RadioItems(options=['Género', 'Suma asegurada', ], value='Género', id='controls-and-radio-item'),
+    dcc.RadioItems(options=['SEXO', 'SUMA ASEGURADA', ], value='SEXO', id='controls-and-radio-item'),
     dash_table.DataTable(data=df_emision.to_dict('records'), page_size=6),
     dcc.Graph(figure={}, id='controls-and-graph'),
 
