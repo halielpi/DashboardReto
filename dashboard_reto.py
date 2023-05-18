@@ -1,5 +1,5 @@
 import dash
-from dash import dcc
+from dash import dcc, dash_table, dcc, callback, Output, Input
 from dash import html 
 import plotly.graph_objects as go
 
@@ -19,47 +19,20 @@ app.layout = html.Div([
         html.Li('Jorge Jair Licea Ávalos (A01654956)'),
         html.Li('Maximiliano Barajas Chávez (A01654403)'),
         ]),
-    dcc.Graph(
-        id='graph_1',
-        figure=sexo_por_entidad(),
-        style={'width': '50%'}
-    ),
-    dcc.Graph(
-        id='graph_2',
-        figure=formas_ventas(),
-        style={'width': '50%'}
-    ),
-    dcc.Graph(
-        id='graph_3',
-        figure=piramide_poblacional(),
-        style={'width': '50%'}
-    ),
-    dcc.Graph(
-        id='graph_4',
-        figure=plot_barras(),
-        style={'width': '50%'}
-    ),
-    dcc.Graph(
-        id='graph_5',
-        figure=modalidad_poliza(),
-        style={'width': '50%'}
-    ),
-    dcc.Graph(
-        id='graph_6',
-        figure=cobertura(),
-        style={'width': '50%'}
-    ),
-    dcc.Graph(
-        id='graph_7',
-        figure=siniestros(),
-        style={'width': '50%'}
-    ),
-    dcc.Graph(
-        id='graph_8',
-        figure=siniestros_por_monto_pagado(),
-        style={'width': '50%'}
-    ),
+    dcc.RadioItems(options=['Género', 'Suma asegurada', ], value='Género', id='controls-and-radio-item'),
+    dash_table.DataTable(data=df_emision.to_dict('records'), page_size=6),
+    dcc.Graph(figure={}, id='controls-and-graph'),
+
 ])
+
+# Add controls to build the interaction
+@callback(
+    Output(component_id='controls-and-graph', component_property='figure'),
+    Input(component_id='controls-and-radio-item', component_property='value')
+)
+def update_graph(col_chosen):
+    fig = px.histogram(df_emision, x='ENTIDAD ', y=col_chosen, histfunc='avg')
+    return fig
 
 if __name__ == '__main__':
     app.run_server(debug=True, port=8051)

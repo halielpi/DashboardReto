@@ -18,9 +18,7 @@ app.layout =dbc.Container([
             html.Li('Jorge Jair Licea Ávalos (A01654956)'),
             html.Li('Maximiliano Barajas Chávez (A01654403)'),
         ]),
-        
-        dbc.Alert('Hello, Bootstrap', className='m-5'),
-  
+          
         dbc.Tabs([
             dbc.Tab(
                 dbc.Card(
@@ -47,7 +45,7 @@ app.layout =dbc.Container([
                     ),
                     className='mt-3'                
                 ),
-                label='Tab1', active_tab_style={"textTransform": "uppercase"},
+                label='Quién', active_tab_style={"textTransform": "uppercase"},
                 activeTabClassName="fw-bold"),
             dbc.Tab(
                 dbc.Card(
@@ -74,7 +72,7 @@ app.layout =dbc.Container([
                     ),
                     className='mt-3'                
                 ),
-                label='Tab2', active_tab_style={"textTransform": "uppercase"},
+                label='Qué', active_tab_style={"textTransform": "uppercase"},
                 activeTabClassName="fw-bold"),
             dbc.Tab(
                 dbc.Card(
@@ -96,7 +94,7 @@ app.layout =dbc.Container([
                     ),
                     className='mt-3'                
                 ),
-                label='Tab3', active_tab_style={"textTransform": "uppercase"},
+                label='Para qué', active_tab_style={"textTransform": "uppercase"},
                 activeTabClassName="fw-bold"),        
         ])
 ])
