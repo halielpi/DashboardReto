@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np 
 import plotly.express as px 
 import plotly.graph_objs as go
+import requests
 
 
 sio_file_comisiones = '/Users/xariselpichardojaime/Desktop/My Python/DashboardReto/downloads/comisiones.csv'
@@ -34,6 +35,11 @@ columns2 = ['MONTO RECLAMADO', 'MONTO PAGADO', 'NUMERO DE SINIESTROS', 'MONTO DE
 for col2 in columns2:
     df_siniestros[col2] = pd.to_numeric(df_siniestros[col2].replace('[^0-9\.-]','',regex=True), downcast='float')
 
+ors_entidades_df= ors_entidades_df.apply(pd.to_numeric, downcast= "integer", errors= "ignore")
+ors_entidades_df["AÑO"]= ors_entidades_df["AÑO"].apply(str)
+ors_entidades_df["ENTIDAD"] = ors_entidades_df["ENTIDAD"].replace("Distrito Federal", "Ciudad de México")
+ors_entidades_df["ENTIDAD"] = ors_entidades_df["ENTIDAD"].replace("Estado de México", "México")
+
 def sexo_por_entidad():
 
     df_grouped = df_emision.groupby(['SEXO', 'ENTIDAD '])['SEXO'].count().reset_index(name='count')
@@ -44,15 +50,25 @@ def sexo_por_entidad():
 def plot_barras():
     barras = df_emision.groupby('ENTIDAD ')['SUMA ASEGURADA'].sum().reset_index()
     barras['SUMA ASEGURADA'] = barras['SUMA ASEGURADA'] / 1000000
-    fig = px.bar(barras, x='ENTIDAD ', y='SUMA ASEGURADA', color='ENTIDAD ', height=500, width=1000)
-    fig.update_layout(title='Suma Asegurada por Estado en MDP', xaxis_title="Estados", yaxis_title="Suma asegurada en Millones")
+    barras.sort_values(by='SUMA ASEGURADA', ascending=False, inplace=True)
+
+    fig = px.bar(barras, x='ENTIDAD ', y='SUMA ASEGURADA',
+                color_discrete_sequence=['#1E5C4E'],  
+                height=600, width=1000,
+               )
+
+    fig.update_layout(title='Suma Asegurada por Estado en MDP',
+                    xaxis_title="Estados",
+                    yaxis_title="Suma asegurada en Millones")
+
     fig.update_yaxes(tickformat=".2f", title='Suma asegurada en Millones')
+
     return fig
 
 def formas_ventas():
     formas = df_emision.groupby('FORMA DE VENTA')['FORMA DE VENTA'].count().reset_index(name='Suma')
     formas.sort_values(by='Suma', ascending=False, inplace=True)
-    fig = px.bar(formas, x='FORMA DE VENTA', y='Suma', color='FORMA DE VENTA', height=500, width=1000)
+    fig = px.bar(formas, x='FORMA DE VENTA', y='Suma', color_discrete_sequence=['#1E5C4E'], height=600, width=1000)
     fig.update_layout(title='Formas de venta de seguros',
                       xaxis_title="Forma de venta",
                       yaxis_title="Cantidad de ventas",
@@ -116,12 +132,14 @@ def cobertura():
     frecuencia_cobertura = df_emision['COBERTURA'].value_counts()
 
     # Crear el gráfico de barras
-    fig = px.bar(frecuencia_cobertura, x=frecuencia_cobertura.index, y='COBERTURA', color='COBERTURA', height=500, width=1000)
+    fig = px.bar(frecuencia_cobertura, x=frecuencia_cobertura.index, y='COBERTURA',
+                 color_discrete_sequence=['#1E5C4E'], 
+                 height=600, width=1000)
 
     # Configurar el título y etiquetas del eje
     fig.update_layout(title='Frecuencia de la variable "COBERTURA"',
-                    xaxis_title='Cobertura',
-                    yaxis_title='Frecuencia')
+                      xaxis_title='Cobertura',
+                      yaxis_title='Frecuencia')
 
     # Mostrar el gráfico
     return fig
@@ -129,9 +147,11 @@ def cobertura():
 def modalidad_poliza():
     modalidad = df_emision['MODALIDAD DE LA POLIZA'].value_counts().reset_index()
 
-    fig = px.bar(modalidad, x='index', y='MODALIDAD DE LA POLIZA', color='index',
-                title='Modalidad de la Póliza',
-                labels={'index': 'Modalidad', 'MODALIDAD DE LA POLIZA': 'Frecuencia'}, height=500, width=1000)
+    fig = px.bar(modalidad, x='index', y='MODALIDAD DE LA POLIZA',
+                 color_discrete_sequence=['#1E5C4E'],  # Especificar un color verde para las barras
+                 title='Modalidad de la Póliza',
+                 labels={'index': 'Modalidad', 'MODALIDAD DE LA POLIZA': 'Frecuencia'},
+                 height=500, width=1000)
 
     return fig
 
@@ -158,4 +178,39 @@ def siniestros_por_monto_pagado():
 
     fig = px.pie(pie2, values='Count', names='CAUSA DEL SINIESTRO', title='Mayores 15 causas de Siniestro según el monto pagado',
                 labels={'CAUSA DEL SINIESTRO':'Causa del siniestro', 'Count':'Porcentaje'}, height=500, width=1000)
+    return fig
+
+def mapa_mexico():
+    repo_url = 'https://raw.githubusercontent.com/angelnmara/geojson/master/mexicoHigh.json' 
+    #Archivo GeoJSON
+    mx_regions_geo = requests.get(repo_url).json()
+
+    # Contar la frecuencia de cada estado
+    estado_frecuencia = ors_entidades_df['ENTIDAD'].value_counts().reset_index()
+
+    estado_frecuencia.columns = ['ENTIDAD', 'FRECUENCIA']
+    estado_frecuencia['ENTIDAD'].str.capitalize()
+    # print(estado_frecuencia)
+    # Cargar los datos del mapa de México
+    mexico = px.data.gapminder().query("country == 'Mexico'")
+    data = estado_frecuencia[estado_frecuencia['ENTIDAD'] != 'Extranjero']
+
+
+
+    df = pd.DataFrame({'estado':data['ENTIDAD'], 'frecuencia':data['FRECUENCIA']})
+
+
+    fig = px.choropleth(data_frame=df, 
+                        geojson=mx_regions_geo, 
+                        locations=df['estado'], # nombre de la columna del Dataframe
+                        featureidkey='properties.name',  # ruta al campo del archivo GeoJSON con el que se hará la relación (nombre de los estados)
+                        color=df['frecuencia'], #El color depende de las cantidades
+                        color_continuous_scale="greens",
+                        height=800,  # Ajustar el alto del gráfico a 600 píxeles
+                        width=1000,
+                        title="Frecuencia de personas aseguradas por estado",
+                        #scope="north america"
+                    )
+
+    fig.update_geos(showcountries=True, showcoastlines=True, showland=True, fitbounds="locations")
     return fig
