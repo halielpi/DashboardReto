@@ -1,174 +1,93 @@
 import dash
-from dash import dcc, html, Dash
+from dash import dcc, html, Dash, dash_table
 import plotly.graph_objects as go
 import dash_bootstrap_components as dbc
 import pandas as pd
 from dash import Input, Output
+from dash.exceptions import PreventUpdate
+import pandas as pd
+import collections
+
+
 
 from graph import *
 
-app = Dash(external_stylesheets=[dbc.themes.BOOTSTRAP])
+df_ORS = ors_entidades_df[["FECHA DE CORTE", "ENTIDAD", "PRIMA EMITIDA", "COMISION DIRECTA", "SUMA ASEGURADA", "MONTO DE SINIESTRALIDAD"]]
+df_ORS['FECHA DE CORTE'] = pd.to_datetime(df_ORS['FECHA DE CORTE'])
+df_prom = df_ORS.groupby(["FECHA DE CORTE", "ENTIDAD"]).mean().reset_index()
 
-app.layout =dbc.Container([
-        html.Img(src='/Users/xariselpichardojaime/Desktop/My Python/DashboardReto/IMG/Logo.png'),
-        html.H3('Dashboard hecho por:', style={'color':'#13322B'}),
-        html.Div(
-            children=[
-        html.Ul([
-                    html.Li('Alejandra Núñez Galindo (A01654136)'),
-                    html.Li('Diego Armando Cortés Mendoza (A01653915)'),
-                    html.Li('Haliel Pichardo Jaime (A01654497)')
-                ])
-            ],
-            style={'width': '50%', 'float': 'left'}
+
+app = Dash(__name__)
+
+app.layout = html.Div([
+    dcc.Store(id='memory-output'),
+    dcc.Dropdown(options=[{'label': entidad, 'value': entidad} for entidad in df_prom.ENTIDAD.unique()],
+                 value=['Distrito Federal', 'Estado de México'],
+                 id='memory-states',
+                 multi=True),
+    dcc.Dropdown(options=[{'label': 'PRIMA EMITIDA', 'value': 'PRIMA EMITIDA'},
+                          {'label': 'COMISION DIRECTA', 'value': 'COMISION DIRECTA'},
+                          {'label': 'SUMA ASEGURADA', 'value': 'SUMA ASEGURADA'},
+                          {'label': 'MONTO DE SINIESTRALIDAD', 'value': 'MONTO DE SINIESTRALIDAD'}],
+                 value='PRIMA EMITIDA',
+                 id='memory-field'),
+    html.Div([
+        dcc.Graph(id='memory-graph'),
+        dash_table.DataTable(
+            id='memory-table',
+            columns=[{'name': i, 'id': i} for i in df_prom.columns]
         ),
-        html.Div(
-            children=[
-                html.Ul([
-                    html.Li('Jorge Jair Licea Ávalos (A01654956)'),
-                    html.Li('Maximiliano Barajas Chávez (A01654403)')
-                ])
-            ],
-            style={'width': '50%', 'float': 'right'}
-        ),
-        dbc.Tabs([
-            dbc.Tab(
-                dbc.Card(
-                    dbc.CardBody(
-                        [
-                            html.H2('Perfil de los asegurados'),
-                            html.Hr(),
-                            
-                            dbc.RadioItems(
-                                id="radios",
-                                className="btn-group",
-                                inputClassName="btn-check",
-                                labelClassName="btn btn-outline-primary",
-                                labelCheckedClassName="active",
-                                options=[
-                                    {"label": "Género", "value": 1},
-                                    {"label": "Edad", "value": 2},
-                                    {"label": "Suma Aseg", "value": 3},
-                                ],
-                                value=1,
-                            ),
-                        
-                            html.Div(id="output"),
-                        ]  
-                    ),
-                    className='mt-3'                
-                ),
-                label='Quién', 
-                label_style={"color": "#A38C5B"} ,
-                active_tab_style={"textTransform": "uppercase"},
-                activeTabClassName="fw-bold"),
-            dbc.Tab(
-                dbc.Card(
-                    dbc.CardBody(
-                        [
-                            html.H2('Características de las pólizas de seguro'),
-                            html.Hr(),
-                            
-                            dbc.RadioItems(
-                                id="radios-2",
-                                className="btn-group",
-                                inputClassName="btn-check",
-                                labelClassName="btn btn-outline-primary",
-                                labelCheckedClassName="active",
-                                options=[
-                                    {"label": "Forma de venta", "value": 1},
-                                    {"label": "Modalida de póliza", "value": 2},
-                                    {"label": "Cobertura", "value": 3},
-                                ],
-                                value=1,
-                            ),
-                            html.Div(id="output-2"),
-                        ]  
-                    ),
-                    className='mt-3'                
-                ),
-                label='Qué', 
-                label_style={"color": "#A38C5B"},
-                active_tab_style={"textTransform": "uppercase"},
-                activeTabClassName="fw-bold"),
-            dbc.Tab(
-                dbc.Card(
-                    dbc.CardBody(
-                        [
-                            html.H2('Para qué se aseguran las personas?'),
-                            html.Hr(),
-                            
-                            dbc.RadioItems(
-                                id="radios-3",
-                                className="btn-group",
-                                inputClassName="btn-check",
-                                labelClassName="btn btn-outline-primary",
-                                labelCheckedClassName="active",
-                                options=[
-                                    {"label": "Siniestros 1", "value": 1},
-                                    {"label": "Siniestros 2", "value": 2},
-                                ],
-                                value=1,
-                            ),
-                            html.Div(id="output-3"),
-                        ]  
-                    ),
-                    className='mt-3'                
-                ),
-                label='Para qué', abel_style={"color": "#A38C5B"} ,active_tab_style={"textTransform": "uppercase"},
-                activeTabClassName="fw-bold"),      
-            ])
+    ])
 ])
 
-@app.callback(Output("output", "children"), [Input("radios", "value")])
-def display_value_1(value):
-    if value == 1:
-        # Crear la gráfica para la opción 1
-        fig = sexo_por_entidad()
-    elif value == 2:
-        # Crear la gráfica para la opción 2
-        fig = piramide_poblacional()
-    elif value == 3:
-        # Crear la gráfica para la opción 3
-        fig = plot_barras()
-    return dcc.Graph(figure=fig)
 
-@app.callback(Output("output", "children"), [Input("radios", "value")])
-def display_value_1(value):
-    if value == 1:
-        # Crear la gráfica para la opción 1
-        fig = sexo_por_entidad()
-    elif value == 2:
-        # Crear la gráfica para la opción 2
-        fig = piramide_poblacional()
-    elif value == 3:
-        # Crear la gráfica para la opción 3
-        fig = plot_barras()
-    return dcc.Graph(figure=fig)
+@app.callback(Output('memory-output', 'data'),
+              Input('memory-states', 'value'))
+def filter_states(states_selected):
+    if not states_selected:
+        # Return all the rows on initial load/no country selected.
+        return df_prom.to_dict('records')
 
-@app.callback(Output("output-2", "children"), [Input("radios-2", "value")])
-def display_value_2(value):
-    if value == 1:
-        # Crear la gráfica para la opción 1
-        fig = formas_ventas()
-    elif value == 2:
-        # Crear la gráfica para la opción 2
-        fig = modalidad_poliza()
-    elif value == 3:
-        # Crear la gráfica para la opción 2
-        fig = cobertura()
-    return dcc.Graph(figure=fig)
+    filtered = df_prom.query('ENTIDAD in @states_selected')
 
-@app.callback(Output("output-3", "children"), [Input("radios-3", "value")])
-def display_value_3(value):
-    if value == 1:
-        # Crear la gráfica para la opción 1
-        fig = siniestros()
-    elif value == 2:
-        # Crear la gráfica para la opción 2
-        fig = siniestros_por_monto_pagado()
-    return dcc.Graph(figure=fig)
 
+    return filtered.to_dict('records')
+
+
+@app.callback(Output('memory-table', 'data'),
+              Input('memory-output', 'data'))
+def on_data_set_table(data):
+    if data is None:
+        raise PreventUpdate
+
+    return data
+
+@app.callback(Output('memory-graph', 'figure'),
+              Input('memory-output', 'data'),
+              Input('memory-field', 'value'))
+def on_data_set_graph(data, field):
+    if data is None:
+        raise PreventUpdate
+
+    print(data)  # Imprimir los datos filtrados
+
+    aggregation = collections.defaultdict(
+        lambda: collections.defaultdict(list)
+    )
+
+    for row in data:
+
+        a = aggregation[row['ENTIDAD']]
+
+        a['name'] = row['ENTIDAD']
+        a['mode'] = 'lines+markers'
+
+        a['x'].append(row[field])
+        a['y'].append(row['FECHA DE CORTE'])
+
+    return {
+        'data': [x for x in aggregation.values()]
+    }
 
 if __name__ == '__main__':
-    app.run_server(debug=True, port=8053)
+    app.run_server(debug=True, threaded=True, port=10450)
