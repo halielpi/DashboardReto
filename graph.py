@@ -52,8 +52,14 @@ def sexo_por_entidad():
     fig.update_layout(xaxis_tickangle=-90, xaxis_title='Estado', yaxis_title='Número de personas', title='Número de personas por sexo en cada entidad')
     return fig
 
-def plot_barras():
-    barras = ors_entidades_df.groupby('ENTIDAD')['SUMA ASEGURADA'].sum().reset_index()
+def plot_barras(selected_years):
+    if selected_years is not None:
+        df_filtered = ors_entidades_df[ors_entidades_df['AÑO'].isin(selected_years)]
+    else:
+        df_filtered = ors_entidades_df
+        
+    # Resto del código existente
+    barras = df_filtered.groupby('ENTIDAD')['SUMA ASEGURADA'].sum().reset_index()
     barras['SUMA ASEGURADA'] = barras['SUMA ASEGURADA']/1000000000
     barras.sort_values(by='SUMA ASEGURADA', ascending=False, inplace=True)
 
@@ -122,8 +128,13 @@ def piramide_poblacional():
     # Mostrar el gráfico
     return fig
 
-def formas_ventas():
-    formas = df_emision.groupby('FORMA DE VENTA')['FORMA DE VENTA'].count().reset_index(name='Suma')
+def formas_ventas(selected_state):
+    if selected_state is not None:
+        formas = df_emision[df_emision['ENTIDAD '] == selected_state]
+    else:
+        formas = df_emision
+
+    formas = formas.groupby('FORMA DE VENTA')['FORMA DE VENTA'].count().reset_index(name='Suma')
     formas.sort_values(by='Suma', ascending=False, inplace=True)
     fig = px.bar(formas, x='FORMA DE VENTA', y='Suma', color_discrete_sequence=['#1E5C4E'], height=600, width=1000)
     fig.update_layout(title='Formas de venta de seguros',
@@ -131,14 +142,22 @@ def formas_ventas():
                       yaxis_title="Cantidad de ventas",
                       xaxis_tickangle=-90)
     return fig
+
+# Las otras dos funciones (modalidad_poliza y cobertura) deben seguir un enfoque similar
+
     
 
-def cobertura():
-    frecuencia_cobertura = df_emision['COBERTURA'].value_counts()
+def cobertura(selected_state):
+    if selected_state is not None:
+        coberturas = df_emision[df_emision['ENTIDAD '] == selected_state]['COBERTURA']
+    else:
+        coberturas = df_emision['COBERTURA']
+
+    frecuencia_cobertura = coberturas.value_counts()
 
     # Crear el gráfico de barras
     fig = px.bar(frecuencia_cobertura, x=frecuencia_cobertura.index, y='COBERTURA',
-                 color_discrete_sequence=['#1E5C4E'], 
+                 color_discrete_sequence=['#1E5C4E'],
                  height=600, width=1000)
 
     # Configurar el título y etiquetas del eje
@@ -149,8 +168,13 @@ def cobertura():
     # Mostrar el gráfico
     return fig
 
-def modalidad_poliza():
-    modalidad = df_emision['MODALIDAD DE LA POLIZA'].value_counts().reset_index()
+def modalidad_poliza(selected_state):
+    if selected_state is not None:
+        modalidades = df_emision[df_emision['ENTIDAD '] == selected_state]['MODALIDAD DE LA POLIZA']
+    else:
+        modalidades = df_emision['MODALIDAD DE LA POLIZA']
+
+    modalidad = modalidades.value_counts().reset_index()
 
     fig = px.bar(modalidad, x='index', y='MODALIDAD DE LA POLIZA',
                  color_discrete_sequence=['#1E5C4E'],  # Especificar un color verde para las barras

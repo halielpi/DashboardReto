@@ -9,12 +9,15 @@ from dash.dependencies import Input, Output
 
 from graph2 import *
 
+image_path = 'assets/Logo2.png' 
+
+html.Img(src=image_path)
+
 app = Dash(external_stylesheets=[dbc.themes.BOOTSTRAP])
 
 
 app.layout =dbc.Container([
-        html.H1('Dashboard para CNSF', style={'textAlign':'center','color':'white', 'background-color': '#1E5C4E'}),
-        html.Img(src='./IMG/Logo.png'),
+        html.Img(src=image_path),
         html.H3('Dashboard hecho por:', style={'color':'#13322B'}),
         dbc.Row([
         dbc.Col([
@@ -57,14 +60,6 @@ app.layout =dbc.Container([
                                 style={"color": "#1E5C4E", "border-color": "#1E5C4E"},
                             ),
                             
-                            dcc.Dropdown(
-                                id="dropdown-1",
-                                options=[
-                                    {'label': str(year), 'value': year} for year in ors_entidades_df['AÑO'].unique()
-                                ],
-                                value=None,
-                                multi=True
-                            ),
                             
                             html.Div(id="output"),
                         ]  
@@ -116,13 +111,12 @@ app.layout =dbc.Container([
                             html.Hr(),
                             
                             dcc.Dropdown(
-                                    options=[
-                                        {'label': 'Option 1', 'value': 1},
-                                        {'label': 'Option 2', 'value': 2},
-                                        {'label': 'Option 3', 'value': 3}
-                                    ],
-                                    value=None
-                                ),
+                                options=[
+                                    {'label': estado, 'value': estado} for estado in df_siniestros['ENTIDAD'].unique()
+                                ],
+                                value=None
+                            ),
+
                             dbc.RadioItems(
                                 id="radios-3",
                                 className="btn-group",
@@ -133,6 +127,7 @@ app.layout =dbc.Container([
                                     {"label": "Siniestros 1", "value": 1},
                                     {"label": "Siniestros 2", "value": 2},
                                     {"label": "Siniestros 3", "value": 3},
+                                    {"label": "Siniestros 3", "value": 4},
                                 ],
                                 value=1,
                                 style={"color": "#1E5C4E", "border-color": "#1E5C4E"},
@@ -148,51 +143,53 @@ app.layout =dbc.Container([
 ])
 
 
-@app.callback(Output("output", "children"), [Input("radios", "value"), Input("dropdown-1", "value")])
-def update_graph_1(value, selected_years):
+@app.callback(Output("output", "children"), [Input("radios", "value")])
+def update_graph_1(value):
     if value == 4:
         return html.Div([
-            dcc.Dropdown(
-                id="dropdown-1",
-                options=[
-                    {'label': str(year), 'value': year} for year in ors_entidades_df['AÑO'].unique()
-                ],
-                value=None,
-                multi=True
-            ),
-            dcc.Graph(figure=plot_barras(selected_years))
-        ])
+                dcc.Dropdown(
+                    id="dropdown-4",
+                    options=[
+                        {'label': str(year), 'value': year} for year in ors_entidades_df['AÑO'].unique()
+                    ],
+                    value=None,
+                    multi=True,
+                    style={'color': '#A38C5B'}
+                ),
+                html.Div(id="output-4")  # Aquí se mostrará la gráfica actualizada
+            ])
+
     elif value == 1:
-        # Crear la gráfica para la opción 1
         fig = mapa_mexico()
     elif value == 2:
-        # Crear la gráfica para la opción 2
         fig = sexo_por_entidad()
     elif value == 3:
-        # Crear la gráfica para la opción 3
         fig = piramide_poblacional()
     return dcc.Graph(figure=fig)
+
+@app.callback(Output("output-4", "children"), [Input("dropdown-4", "value")])
+def update_graph_4(selected_years):
+    # Actualiza la gráfica según los años seleccionados
+    fig = plot_barras(selected_years)
+    # Devuelve la gráfica actualizada dentro del dcc.Graph
+    return dcc.Graph(figure=fig)
+
 
 @app.callback(Output("output-2", "children"), [Input("radios-2", "value"), Input("dropdown-2", "value")])
 def update_graph_2(value, selected_state):
     if value == 1:
-        # Crear la gráfica para la opción 1
         fig = formas_ventas(selected_state)
     elif value == 2:
-        # Crear la gráfica para la opción 2
         fig = modalidad_poliza(selected_state)
     elif value == 3:
-        # Crear la gráfica para la opción 3
         fig = cobertura(selected_state)
     return dcc.Graph(figure=fig)
 
 @app.callback(Output("output-3", "children"), [Input("radios-3", "value")])
 def display_value_3(value):
     if value == 1:
-        # Crear la gráfica para la opción 1
         fig = siniestros()
     elif value == 2:
-        # Crear la gráfica para la opción 2
         fig = siniestros_por_monto_pagado()
     elif value == 3:
         return html.Div([
@@ -201,8 +198,26 @@ def display_value_3(value):
             dcc.Input(id='input-top-n', type='number', value=10, min=1, max=20, step=1),
             dcc.Graph(id='bar-chart')
         ])
+    elif value ==4:
+        return html.Div([
+                    dcc.Dropdown(
+                        id="dropdown-causa",
+                        options=[
+                            {'label': causa, 'value': causa} for causa in df_siniestros['CAUSA DEL SINIESTRO'].unique()
+                        ],
+                        value=None,
+                        multi=False,
+                        placeholder="Selecciona una causa de siniestro"
+                    ),
+                    dcc.Graph(id="grafica-piramide")
+                ])
 
     return dcc.Graph(figure=fig)
+
+@app.callback(Output("grafica-piramide", "figure"),Input("dropdown-causa", "value"))
+def actualizar_piramide(causa_siniestro):
+    return piramide_siniestros(causa_siniestro)
+
 
 @app.callback(Output('bar-chart', 'figure'), [Input('input-top-n', 'value')])
 def update_bar_chart(n):

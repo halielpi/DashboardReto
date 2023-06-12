@@ -30,7 +30,7 @@ columns = ['SUMA ASEGURADA', 'PRIMA EMITIDA', 'NUMERO DE ASEGURADOS', 'EDAD']
 for col in columns:
     df_emision[col] = pd.to_numeric(df_emision[col].replace('[^0-9\.-]','',regex=True), downcast='float')
 
-columns2 = ['MONTO RECLAMADO', 'MONTO PAGADO', 'NUMERO DE SINIESTROS', 'MONTO DE REASEGURO', ]
+columns2 = ['MONTO RECLAMADO', 'MONTO PAGADO', 'NUMERO DE SINIESTROS', 'MONTO DE REASEGURO', 'EDAD' ]
 
 for col2 in columns2:
     df_siniestros[col2] = pd.to_numeric(df_siniestros[col2].replace('[^0-9\.-]','',regex=True), downcast='float')
@@ -62,7 +62,7 @@ def plot_barras(selected_years):
         
     # Resto del código existente
 
-    barras = ors_entidades_df.groupby('ENTIDAD')['SUMA ASEGURADA'].sum().reset_index()
+    barras = df_filtered.groupby('ENTIDAD')['SUMA ASEGURADA'].sum().reset_index()
     barras['SUMA ASEGURADA'] = barras['SUMA ASEGURADA']/1000000000
     barras.sort_values(by='SUMA ASEGURADA', ascending=False, inplace=True)
 
@@ -201,6 +201,7 @@ def siniestros():
 
     return fig
 
+
 def siniestros_bar(n):
     barras3 = df_siniestros.groupby('CAUSA DEL SINIESTRO')['CAUSA DEL SINIESTRO'].count()
     barras3 = barras3.to_frame('Count')
@@ -231,6 +232,64 @@ def siniestros_por_monto_pagado():
     fig = px.pie(pie2, values='Count', names='CAUSA DEL SINIESTRO', title='Mayores 15 causas de Siniestro según el monto pagado',
                 labels={'CAUSA DEL SINIESTRO':'Causa del siniestro', 'Count':'Porcentaje'}, height=500, width=1000)
     return fig
+
+def piramide_siniestros(causa_siniestro=None):
+    # Filtrar el DataFrame por la causa del siniestro seleccionada
+    if causa_siniestro is not None:
+        df_filtrado = df_siniestros[df_siniestros['CAUSA DEL SINIESTRO'] == causa_siniestro]
+    else:
+        df_filtrado = df_siniestros
+
+    # Agrupar los siniestros por edad y sexo
+    df_siniestros_grupo = df_filtrado.groupby(['EDAD', 'SEXO']).size().reset_index(name='num_siniestros')
+
+    # Crear un nuevo DataFrame con los resultados de la agrupación
+    df_piramide_siniestros = pd.concat([
+        df_siniestros_grupo[df_siniestros_grupo['SEXO'] == 'Masculino'].sort_values(by='EDAD'),
+        df_siniestros_grupo[df_siniestros_grupo['SEXO'] == 'Femenino'].sort_values(by='EDAD', ascending=False)
+    ], ignore_index=True)
+
+    # Crear la figura
+    fig = go.Figure()
+
+    # Agregar las barras de siniestros
+    fig.add_trace(
+        go.Bar(
+            x=-df_piramide_siniestros[df_piramide_siniestros['SEXO'] == 'Femenino']['num_siniestros'],
+            y=df_piramide_siniestros[df_piramide_siniestros['SEXO'] == 'Femenino']['EDAD'],
+            orientation='h',
+            name='Siniestros Femeninos',
+            marker_color='#bd609b'
+        )
+    )
+
+    fig.add_trace(
+        go.Bar(
+            x=df_piramide_siniestros[df_piramide_siniestros['SEXO'] == 'Masculino']['num_siniestros'],
+            y=df_piramide_siniestros[df_piramide_siniestros['SEXO'] == 'Masculino']['EDAD'],
+            orientation='h',
+            name='Siniestros Masculinos',
+            marker_color='#65b0c9'
+        )
+    )
+
+    # Configurar el diseño del gráfico
+    fig.update_layout(
+        title='Pirámide de Siniestros por Sexo y Edad',
+        xaxis=dict(title='Número de Siniestros'),
+        yaxis=dict(title='Edad'),
+        barmode='overlay',
+        bargap=0.1,
+        legend=dict(
+            yanchor='top',
+            y=0.99,
+            xanchor='left',
+            x=0.01
+        )
+    )
+
+    return fig
+
 
 def mapa_mexico():
     repo_url = 'https://raw.githubusercontent.com/angelnmara/geojson/master/mexicoHigh.json' 
