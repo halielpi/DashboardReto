@@ -11,8 +11,6 @@ from graph2 import *
 
 image_path = 'assets/Logo2.png' 
 
-html.Img(src=image_path)
-
 app = Dash(external_stylesheets=[dbc.themes.BOOTSTRAP])
 
 
@@ -79,7 +77,8 @@ app.layout =dbc.Container([
                                 options=[
                                     {'label': estado, 'value': estado} for estado in df_emision['ENTIDAD '].unique()
                                 ],
-                                value=None
+                                value=None,
+                                placeholder="Selecciona una estado"
                             ),
 
                             dbc.RadioItems(
@@ -92,6 +91,7 @@ app.layout =dbc.Container([
                                     {"label": "Forma de venta", "value": 1},
                                     {"label": "Modalida de póliza", "value": 2},
                                     {"label": "Cobertura", "value": 3},
+                                    {"label": "Prima", "value": 4},
                                 ],
                                 value=1,
                                 style={"color": "#1E5C4E", "border-color": "#1E5C4E"},
@@ -111,10 +111,12 @@ app.layout =dbc.Container([
                             html.Hr(),
                             
                             dcc.Dropdown(
+                                id="dropdown-5",
                                 options=[
                                     {'label': estado, 'value': estado} for estado in df_siniestros['ENTIDAD'].unique()
                                 ],
-                                value=None
+                                value=None,
+                                placeholder="Selecciona una estado"
                             ),
 
                             dbc.RadioItems(
@@ -124,10 +126,9 @@ app.layout =dbc.Container([
                                 labelClassName="btn btn-custom",
                                 labelCheckedClassName="active",
                                 options=[
-                                    {"label": "Siniestros 1", "value": 1},
-                                    {"label": "Siniestros 2", "value": 2},
-                                    {"label": "Siniestros 3", "value": 3},
-                                    {"label": "Siniestros 3", "value": 4},
+                                    {"label": "Siniestros", "value": 1},
+                                    {"label": "Siniestros segun MP", "value": 2},
+                                    {"label": "Piramide siniestros", "value": 3},
                                 ],
                                 value=1,
                                 style={"color": "#1E5C4E", "border-color": "#1E5C4E"},
@@ -154,7 +155,8 @@ def update_graph_1(value):
                     ],
                     value=None,
                     multi=True,
-                    style={'color': '#A38C5B'}
+                    style={'color': '#A38C5B'},
+                    placeholder="Selecciona una año"
                 ),
                 html.Div(id="output-4")  # Aquí se mostrará la gráfica actualizada
             ])
@@ -183,22 +185,33 @@ def update_graph_2(value, selected_state):
         fig = modalidad_poliza(selected_state)
     elif value == 3:
         fig = cobertura(selected_state)
+    elif value == 4:
+        return html.Div([
+            html.H1("Gráfica de Promedio de Prima Emitida por Fecha de Corte"),
+            dcc.Dropdown(
+                id="dropdown-estado",
+                options=[{'label': estado, 'value': estado} for estado in estados],
+                value=None,
+                placeholder="Selecciona un estado"
+            ),
+            dcc.Dropdown(
+                id="dropdown-ramo",
+                options=[{'label': ramo, 'value': ramo} for ramo in ramos],
+                value=None,
+                placeholder="Selecciona un ramo"
+            ),
+            dcc.Graph(id="line-chart")
+        ])
     return dcc.Graph(figure=fig)
 
-@app.callback(Output("output-3", "children"), [Input("radios-3", "value")])
-def display_value_3(value):
+
+@app.callback(Output("output-3", "children"), [Input("radios-3", "value"), Input("dropdown-5", "value")])
+def display_value_3(value, selected_state):
     if value == 1:
-        fig = siniestros()
+        fig = siniestros(selected_state)
     elif value == 2:
-        fig = siniestros_por_monto_pagado()
-    elif value == 3:
-        return html.Div([
-            html.H1('Top Causas de Siniestro', style={'textAlign': 'center', 'color':'#13322B'}),
-            html.Label('Selecciona el número de causas a mostrar:'),
-            dcc.Input(id='input-top-n', type='number', value=10, min=1, max=20, step=1),
-            dcc.Graph(id='bar-chart')
-        ])
-    elif value ==4:
+        fig = siniestros_por_monto_pagado(selected_state)
+    elif value ==3:
         return html.Div([
                     dcc.Dropdown(
                         id="dropdown-causa",
@@ -218,11 +231,22 @@ def display_value_3(value):
 def actualizar_piramide(causa_siniestro):
     return piramide_siniestros(causa_siniestro)
 
+@app.callback(
+    Output("line-chart", "figure"),
+    [Input("dropdown-estado", "value"), Input("dropdown-ramo", "value")]
+)
+def update_line_chart(selected_state, selected_ramo):
+    filtered_data = df_ORS_prima
 
-@app.callback(Output('bar-chart', 'figure'), [Input('input-top-n', 'value')])
-def update_bar_chart(n):
-    fig = siniestros_bar(n)
+    if selected_state:
+        filtered_data = filtered_data[filtered_data['ENTIDAD'] == selected_state]
+    if selected_ramo:
+        filtered_data = filtered_data[filtered_data['RAMO'] == selected_ramo]
+
+    fig = generar_grafica_promedio_prima(filtered_data)
+
     return fig
+
 
 if __name__ == '__main__':
     app.run_server(debug=True, port=8051)

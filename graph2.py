@@ -45,6 +45,16 @@ ors_entidades_df[columnas] = ors_entidades_df[columnas].apply(lambda column: col
 ors_entidades_df = ors_entidades_df.apply(pd.to_numeric, downcast = "integer", errors="ignore") 
 ors_entidades_df["AÑO"]= ors_entidades_df["AÑO"].apply(str)
 
+df_ORS = ors_entidades_df[["FECHA DE CORTE", "RAMO", "ENTIDAD", "PRIMA EMITIDA", "COMISION DIRECTA", "SUMA ASEGURADA", "MONTO DE SINIESTRALIDAD"]]
+df_ORS_prima = df_ORS[["FECHA DE CORTE", "RAMO", "ENTIDAD", "PRIMA EMITIDA"]]
+
+    # Quitar negativos
+df_ORS_prima = df_ORS_prima[(df_ORS_prima[["PRIMA EMITIDA"]] > 0).all(1)]
+df_ORS_prima['FECHA DE CORTE'] = pd.to_datetime(df_ORS_prima['FECHA DE CORTE'])
+
+    # Obtener las listas de estados y ramos únicos
+estados = df_ORS_prima['ENTIDAD'].unique()
+ramos = df_ORS_prima['RAMO'].unique()
 
 def sexo_por_entidad():
 
@@ -187,8 +197,23 @@ def modalidad_poliza(selected_state):
 
     return fig
 
-def siniestros():
-    barras3= df_siniestros.groupby('CAUSA DEL SINIESTRO')['CAUSA DEL SINIESTRO'].count()
+def generar_grafica_promedio_prima(filtered_data):
+    promedios_por_fecha = filtered_data.groupby("FECHA DE CORTE")["PRIMA EMITIDA"].mean()
+
+    fig = px.line(promedios_por_fecha, x=promedios_por_fecha.index, y=promedios_por_fecha.values,
+                  title="Promedio de Prima Emitida por Fecha de Corte",
+                  labels={"x": "Fecha de corte", "y": "Promedio por fecha"},
+                  markers=True)
+
+    return fig
+
+def siniestros(selected_state):
+    if selected_state is not None:
+        siniestro = df_siniestros[df_siniestros['ENTIDAD'] == selected_state]
+    else:
+        siniestro = df_siniestros
+        
+    barras3= siniestro.groupby('CAUSA DEL SINIESTRO')['CAUSA DEL SINIESTRO'].count()
     barras3 = barras3.to_frame('Count')
     barras3.reset_index(inplace=True) 
     barras3.sort_values( by = 'Count', ascending = False, inplace = True )
@@ -202,18 +227,22 @@ def siniestros():
     return fig
 
 
-def siniestros_bar(n):
-    barras3 = df_siniestros.groupby('CAUSA DEL SINIESTRO')['CAUSA DEL SINIESTRO'].count()
+def siniestros_bar(selected_state, n):
+    if selected_state:
+        selected_state = [selected_state]  # Convertir a lista si no está vacío
+        siniestro = df_siniestros[df_siniestros['ENTIDAD'].isin(selected_state)]
+    else:
+        siniestro = df_siniestros
+
+    barras3 = siniestro.groupby('CAUSA DEL SINIESTRO')['CAUSA DEL SINIESTRO'].count()
     barras3 = barras3.to_frame('Count')
-    barras3.reset_index(inplace=True)
+    barras3.reset_index(inplace=True)  # Restablecer el índice
     barras3.sort_values(by='Count', ascending=False, inplace=True)
 
-    barras3 = pd.DataFrame({'CAUSA DEL SINIESTRO': barras3['CAUSA DEL SINIESTRO'].head(n), 'Count': barras3['Count'].head(n)})
+    barras3 = barras3.head(n)
+    
 
-    # Sort the DataFrame in descending order
-    barras3.sort_values(by='Count', ascending=False, inplace=True)
-
-    # Utilize the bar function of Plotly Express to create a horizontal bar chart
+    # Utilizar el gráfico de barras horizontal de Plotly Express
     fig = px.bar(barras3, x='Count', y='CAUSA DEL SINIESTRO', orientation='h',
                  title='Top {} causas de Siniestro'.format(n),
                  labels={'CAUSA DEL SINIESTRO': 'Causa del siniestro', 'Count': 'Cantidad'},
@@ -222,8 +251,14 @@ def siniestros_bar(n):
 
     return fig
 
-def siniestros_por_monto_pagado():
-    barras4= df_siniestros.groupby('CAUSA DEL SINIESTRO')['MONTO PAGADO'].sum()
+
+def siniestros_por_monto_pagado(selected_state):
+    if selected_state is not None:
+        siniestro = df_siniestros[df_siniestros['ENTIDAD'] == selected_state]
+    else:
+        siniestro = df_siniestros
+        
+    barras4= siniestro.groupby('CAUSA DEL SINIESTRO')['MONTO PAGADO'].sum()
     barras4 = barras4.to_frame('Count')
     barras4.reset_index(inplace=True) 
 
