@@ -10,6 +10,8 @@ from dash.dependencies import Input, Output
 from graph2 import *
 
 image_path = 'assets/Logo2.png' 
+image_path2 = 'assets/arima1.png'
+image_path3 = 'assets/bosque.png'
 
 app = Dash(external_stylesheets=[dbc.themes.BOOTSTRAP])
 
@@ -92,6 +94,7 @@ app.layout =dbc.Container([
                                     {"label": "Modalida de póliza", "value": 2},
                                     {"label": "Cobertura", "value": 3},
                                     {"label": "Prima", "value": 4},
+                                    {"label": "Predicciones", "value": 5},
                                 ],
                                 value=1,
                                 style={"color": "#1E5C4E", "border-color": "#1E5C4E"},
@@ -201,6 +204,11 @@ def update_graph_2(value, selected_state):
                 placeholder="Selecciona un ramo"
             ),
             dcc.Graph(id="line-chart")
+        ])
+    elif value == 5:
+        return html.Div([
+            html.Img(src=image_path2), 
+            html.Img(src=image_path3),
         ])
     return dcc.Graph(figure=fig)
 
